@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vector painting app</title>
+
+
+    <link rel="stylesheet" href="styles.css">
+    <!-- Importing font awesome for easy access to vector icons for buttons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css" integrity="sha512-xh6O/CkQoPOWDdYTDqeRdPCVd1SpvCA9XXcUnZS2FmJNp1coAFzvtCN9BmamE+4aHK8yyUHUSCcJHgXloTyT2A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+</head>
+<body>
+    <div id="menubar">
+        <div class="colorButtons">
+            <h2>Colors</h2>
+            <input type="color" value="#000000" id="pencilColorSelector" class="colorSelector">
+        </div>
+
+        <div class="colorButtons">
+            <h2>Background color</h2>
+            <input type="color" value="#ffffff" id="backgroundColorSelector" class="colorSelector">
+        </div>
+
+        <div class="pencilSize">
+            <h2>Pencil size <span id="pencilSize">1</span></h2>
+            <input type="range" id="pencilSizeSlider" min="1" max="20" value="1" step="1">
+        </div>
+
+        <div class="functions">
+            <button id="eraserButton"><i class="fas fa-eraser"></i></button>
+            <button id="undoButton"><i class="fas fa-rotate-left"></i></button>
+        </div>
+    </div>
+
+
+    <script>
+        // Setting variables
+
+        var mouseDown = false;
+        var canvas = document.createElement('canvas');
+        var body = document.getElementsByTagName('body')[0];
+        var ctx = canvas.getContext('2d');
+        var linesArray = [];
+        currentSize = 5;
+        var currentColor = "#000000";
+        var currentBackground = "white";
+
+        // launch
+
+        createCanvas();
+
+        // Button events
+
+        //Color picker
+        document.getElementById("pencilColorSelector").addEventListener('change',
+            function() {
+                currentColor = this.value;
+            }
+        );
+
+        //Background color picker
+        document.getElementById("backgroundColorSelector").addEventListener('change',
+            function() {
+                currentBackground = this.value;
+            }
+        );
+
+        //Pencil size
+        document.getElementById("pencilSizeSlider").addEventListener('change',
+            function(){
+                currentSize = this.value;
+            }
+        );
+
+        //Erase button 
+        document.getElementById("eraserButton").addEventListener('click', erase);
+
+        //Undo all button
+        document.getElementById("undoButton").addEventListener('click', createCanvas);
+
+
+        //Mouse event handlers
+
+        canvas.addEventListener('mousedown',
+            function(){
+                mousedown(canvas, event);
+            }
+        );
+
+        canvas.addEventListener('mousemove',
+            function(){
+                mousemove(canvas, event);
+            }
+        );
+
+        canvas.addEventListener('mouseup', mouseup);
+
+
+        //Create canvas
+
+        function createCanvas(){
+            canvas.id = "canvas";
+			canvas.width = parseInt(1920);
+			canvas.height = parseInt(1080);
+
+            canvas.style.zIndex = 8;
+			canvas.style.position = "absolute";
+
+            ctx.fillStyle = currentBackground;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            body.appendChild(canvas);
+        }
+
+        //Erase function
+
+        function erase(){
+            currentSize = 50;
+            currentColor = ctx.fillStyle;
+        }
+
+        //Get mouse position
+        function getMousePos(canvas, evt){
+            var rect = canvas.getBoundingClientRect();
+            return{
+                x: evt.clientX - rect.left,
+                y: evt.clientY - rect.top
+            };
+        }
+
+        //On mouse down
+
+        function mousedown(canvas, evt){
+            console.log("mouse is down")
+            var mousePos = getMousePos(canvas, evt);
+			mouseDown=true
+			var currentPosition = getMousePos(canvas, evt);
+			ctx.moveTo(currentPosition.x, currentPosition.y)
+			ctx.beginPath();
+			ctx.lineWidth  = currentSize;
+			ctx.lineCap = "round";
+			ctx.strokeStyle = currentColor;
+        };
+
+        // On mouse move
+
+		function mousemove(canvas, evt) {
+            console.log("mouse is moving")
+            if(mouseDown){
+            var currentPosition = getMousePos(canvas, evt);
+            ctx.lineTo(currentPosition.x, currentPosition.y)
+            ctx.stroke();
+            store(currentPosition.x, currentPosition.y, currentSize, currentColor);
+            }
+        }
+
+        //Store data
+
+        function store(x, y, s, c){
+            var line = {
+                "x": x,
+                "y": y,
+                "size": s,
+                "color": c
+            }
+            linesArray.push(line);
+        }
+
+        //On mouse up
+
+        function mouseup(){
+            console.log("mouse up")
+            mouseDown = false;
+            store();
+        }
+
+    </script>
+</body>
+</html>

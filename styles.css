@@ -1,0 +1,42 @@
+.colorButtons {
+    display: block;
+    margin: 7% 5%;
+}
+
+canvas {
+    cursor: crosshair;
+}
+
+div#menubar{
+    position: absolute;
+    left: 0;
+    width: 100px;
+    padding: 20px;
+    top: 0;
+}
+
+canvas#canvas{
+    left: 150px;
+    top: 45px;
+}
+
+button{
+    margin-bottom: 10px;
+    width: 100%;
+}
+
+input{
+    width: 100%;
+    margin-bottom: 10px;
+}
+
+
+.toolsButtons button{
+    width: 48%;
+}
+
+.colorSelector{
+    background: transparent;
+    height: 40px;
+}
+
