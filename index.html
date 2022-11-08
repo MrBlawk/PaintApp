@@ -12,19 +12,21 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css" integrity="sha512-xh6O/CkQoPOWDdYTDqeRdPCVd1SpvCA9XXcUnZS2FmJNp1coAFzvtCN9BmamE+4aHK8yyUHUSCcJHgXloTyT2A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 </head>
 <body>
+    <button type="button" class="collapsible">Menu</button>
+<div class="content">
     <div id="menubar">
         <div class="colorButtons">
-            <h2>Colors</h2>
+            <h4>Colors</h4>
             <input type="color" value="#000000" id="pencilColorSelector" class="colorSelector">
         </div>
 
         <div class="colorButtons">
-            <h2>Background color</h2>
+            <h4>Background color (refresh)</h4>
             <input type="color" value="#ffffff" id="backgroundColorSelector" class="colorSelector">
         </div>
 
         <div class="pencilSize">
-            <h2>Pencil size <span id="pencilSize">1</span></h2>
+            <h4>Pencil size <span id="pencilSize">1</span></h4>
             <input type="range" id="pencilSizeSlider" min="1" max="20" value="1" step="1">
         </div>
 
@@ -32,23 +34,70 @@
             <button id="eraserButton"><i class="fas fa-eraser"></i></button>
             <button id="undoButton"><i class="fas fa-rotate-left"></i></button>
         </div>
+
+        <div class="functions">
+            <h4>Import SVG</h4>
+            <button id="importButton"><i class="fas fa-file-import"></i></button>
+
+        </div>
     </div>
+</div>
+    
 
 
     <script>
-        // Setting variables
+        //UI collapsing feature
+        var coll = document.getElementsByClassName("collapsible");
 
+        for (var i = 0; i < coll.length; i++) {
+        coll[i].addEventListener("click", function() {
+            this.classList.toggle("active");
+            var content = this.nextElementSibling;
+            if (content.style.display === "block") {
+            content.style.display = "none";
+            } else {
+            content.style.display = "block";
+            }
+        });
+        }
+
+
+
+
+        // Setting variables
         var mouseDown = false;
-        var canvas = document.createElement('canvas');
-        var body = document.getElementsByTagName('body')[0];
+        var eraseEnabled = false;
+        var canvas = document.createElement("canvas");
+        var body = document.getElementsByTagName("body")[0];
+        var sizeSlider = document.getElementById("pencilSize");
         var ctx = canvas.getContext('2d');
+        
         var linesArray = [];
         currentSize = 5;
+        lastSize = 5; 
         var currentColor = "#000000";
+        var lastColor;
         var currentBackground = "white";
 
-        // launch
+        //world coordinate variables
+        var worldScale = 1;
+        const centerX = window.innerWidth /2;
+        const centerY = window.innerHeight /2;
 
+        const circle = {
+            x: 350,
+            y: -210,
+            radius: 247
+        }
+
+        const point = {
+            x: centerX,
+            y: centerY
+        }
+
+        
+
+        // Initialize drawing canvas
         createCanvas();
 
         // Button events
@@ -71,6 +120,8 @@
         document.getElementById("pencilSizeSlider").addEventListener('change',
             function(){
                 currentSize = this.value;
+                sizeSlider.innerHTML = currentSize;
+                console.log(currentSize);
             }
         );
 
@@ -79,10 +130,11 @@
 
         //Undo all button
         document.getElementById("undoButton").addEventListener('click', createCanvas);
-
+        
+        //importing button
+        document.getElementById("importButton").addEventListener('click', importFile)
 
         //Mouse event handlers
-
         canvas.addEventListener('mousedown',
             function(){
                 mousedown(canvas, event);
@@ -99,26 +151,41 @@
 
 
         //Create canvas
-
         function createCanvas(){
             canvas.id = "canvas";
-			canvas.width = parseInt(1920);
-			canvas.height = parseInt(1080);
+			canvas.width = parseInt(window.innerWidth - (window.innerWidth * 0.2));
+			canvas.height = parseInt(window.innerHeight - (window.innerHeight * 0.2));
 
+            canvas.style.border = "1px";
             canvas.style.zIndex = 8;
 			canvas.style.position = "absolute";
 
             ctx.fillStyle = currentBackground;
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillRect(0, 0, point.x * 2, point.y * 2);
 
             body.appendChild(canvas);
+
+            //fix coordinates of canvas to world coordinates
+            ctx.translate(centerX, centerY);
         }
 
         //Erase function
+        function erase(btn){
+            if(!eraseEnabled){
+                eraseEnabled = true;
+                lastSize = currentSize;
+                lastColor = currentColor;
+                currentSize = 50;
+                currentColor = ctx.fillStyle;
+                document.getElementById("eraserButton").style.backgroundColor = "#8f8f8f"
+            }
+            else{
+                eraseEnabled = false;
+                currentSize = lastSize;
+                currentColor = lastColor;
+                document.getElementById("eraserButton").style.backgroundColor = "#fff"
+            }
 
-        function erase(){
-            currentSize = 50;
-            currentColor = ctx.fillStyle;
         }
 
         //Get mouse position
@@ -131,12 +198,9 @@
         }
 
         //On mouse down
-
         function mousedown(canvas, evt){
-            console.log("mouse is down")
-            var mousePos = getMousePos(canvas, evt);
-			mouseDown=true
-			var currentPosition = getMousePos(canvas, evt);
+			mouseDown = true;
+			var currentPosition = convert(getMousePos(canvas, evt));
 			ctx.moveTo(currentPosition.x, currentPosition.y)
 			ctx.beginPath();
 			ctx.lineWidth  = currentSize;
@@ -145,11 +209,9 @@
         };
 
         // On mouse move
-
 		function mousemove(canvas, evt) {
-            console.log("mouse is moving")
             if(mouseDown){
-            var currentPosition = getMousePos(canvas, evt);
+            var currentPosition = convert(getMousePos(canvas, evt));
             ctx.lineTo(currentPosition.x, currentPosition.y)
             ctx.stroke();
             store(currentPosition.x, currentPosition.y, currentSize, currentColor);
@@ -157,7 +219,6 @@
         }
 
         //Store data
-
         function store(x, y, s, c){
             var line = {
                 "x": x,
@@ -168,12 +229,35 @@
             linesArray.push(line);
         }
 
-        //On mouse up
+        async function importFile(){
+            const response = await fetch("test.json");
+            const obj = await response.json();
+            ctx.beginPath();
+            for(var i in obj){
+                ctx.lineTo(obj[i].x, obj[i].y);
+            }
+            ctx.closePath();
+            ctx.fillStyle = "#8f8f8f";
+            ctx.fill();
+            ctx.fillStyle = currentBackground;
+        }
 
+
+        //On mouse up
         function mouseup(){
-            console.log("mouse up")
             mouseDown = false;
             store();
+        }
+
+        function convert(coords) {
+            const x = (coords.x - centerX) / worldScale;
+            const y = (coords.y - centerY) / worldScale;
+            console.log("X = " + x + " & Y = " + y);
+            return { 
+                x: x, 
+                y: y 
+            };
+
         }
 
     </script>

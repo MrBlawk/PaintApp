@@ -1,3 +1,29 @@
+.collapsible {
+    background-color: #eee;
+    color: #444;
+    cursor: pointer;
+    padding: 18px;
+    width: 10%;
+    border: none;
+    text-align: center;
+    outline: none;
+    font-size: 15px;
+  }
+  
+  /* Add a background color to the button if it is clicked on (add the .active class with JS), and when you move the mouse over it (hover) */
+  .active, .collapsible:hover {
+    background-color: #ccc;
+  }
+  
+  /* Style the collapsible content. Note: hidden by default */
+  .content {
+    padding: 10%;
+    display: none;
+    overflow: hidden;
+    background-color: #f1f1f1;
+  }
+
+
 .colorButtons {
     display: block;
     margin: 7% 5%;
@@ -12,12 +38,15 @@ div#menubar{
     left: 0;
     width: 100px;
     padding: 20px;
-    top: 0;
+    top: 10%;
 }
 
 canvas#canvas{
     left: 150px;
     top: 45px;
+    border: 10px;
+    border: solid;
+    border-color: #000000;
 }
 
 button{
