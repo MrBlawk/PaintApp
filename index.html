@@ -35,6 +35,7 @@
             <div class="functions">
                 <button id="eraserButton"><i class="fas fa-eraser"></i></button>
                 <button id="undoButton"><i class="fas fa-rotate-left"></i></button>
+                <button id="resetButton">reset</button>
             </div>
 
             <div class="functions">
@@ -43,8 +44,8 @@
             </div>
 
             <div class="pencilSize">
-                <h4>Rotation <span id="rotationAmount">0</span></h4>
-                <input type="range" id="rotationAmountSlider" min="0" max="360" value="1" step="1">
+                <h4>Rotation degrees: <span id="rotationAmountId">0</span></h4>
+                <input type="range" id="rotationAmountSlider" min="0" max="360" value="0" step="1">
             </div>
 
             <div class="functions">
@@ -105,7 +106,7 @@
         var importColor = "#ff0000";
         xAxisOffset = 0;
         yAxisOffset = 0; 
-        var rotationAmount = 0;
+        var rotationAmount;
 
         var currentColor = "#000000";
         var lastColor;
@@ -115,6 +116,9 @@
         var worldScale = 1;
         const centerX = window.innerWidth /2;
         const centerY = window.innerHeight / 2;
+
+        //stroke ID
+        let count = 0;
 
         const circle = {
             x: 350,
@@ -160,7 +164,8 @@
         document.getElementById("rotationAmountSlider").addEventListener('change',
             function(){
                 rotationAmount = this.value;
-                rotationAmount.innerHTML = this.value;   
+                rotationAmountId.innerHTML = this.value;   
+                console.log(this.value)
             }
         )
 
@@ -197,8 +202,10 @@
         //Erase button 
         document.getElementById("eraserButton").addEventListener('click', erase);
 
-        //Undo all button
-        document.getElementById("undoButton").addEventListener('click', createCanvas);
+        //reset canvas button
+        document.getElementById("resetButton").addEventListener('click', createCanvas);
+
+        document.getElementById("undoButton").addEventListener('click', undoLast);
         
         //importing button
         document.getElementById("importButton").addEventListener('click', importFile)
@@ -238,7 +245,7 @@
             ctx.translate(centerX, centerY);
         }
 
-        //Erase function
+        //Erase function, fills everything with current set background color
         function erase(btn){
             if(!eraseEnabled){
                 eraseEnabled = true;
@@ -266,7 +273,7 @@
             };
         }
 
-        //On mouse down
+        //On mouse down start tracking line path
         function mousedown(canvas, evt){
 			mouseDown = true;
 			var currentPosition = convert(getMousePos(canvas, evt));
@@ -283,42 +290,93 @@
             var currentPosition = convert(getMousePos(canvas, evt));
             ctx.lineTo(currentPosition.x, currentPosition.y)
             ctx.stroke();
-            store(currentPosition.x, currentPosition.y, currentSize, currentColor);
+            store(currentPosition.x, currentPosition.y, currentSize, currentColor, count);
             }
         }
 
+        //example removing from array
+        // var index = list.map(x => {
+        // return x.Id;
+        // }).indexOf(id);
+
+        // list.splice(index, 1);
+        // console.log(list);
+
+        //work in progress
+        function undoLast(){
+            console.log(count);
+            console.log(linesArray.length);
+            linesArray = linesArray.filter((elem) => elem.n !== count);
+            count--;
+            console.log(linesArray.length);
+            drawPaths();
+            console.log(count);
+        }
+
+        //work in progress / drawing all stores lines from linesArray
+        function drawPaths(){
+        // delete everything
+        createCanvas();
+        // draw all the paths in the paths array
+        // linesArray.forEach(line=>{
+        //     ctx.beginPath(); 
+        //     for(let i = 0; i < line.length; i++){
+        //             ctx.lineTo(line[i].x,line[i].y); 
+        //             ctx.strokeStyle = line[i].c;
+        //             ctx.lineWidth = line[i].s;
+        //             console.log(line[i].c)
+        //         }
+        //         ctx.stroke();
+        //     })
+
+        linesArray.forEach(function(){
+            for(let i = 0; i < linesArray.length; i++){
+                ctx.beginPath();
+                ctx.lineTo(linesArray[i].x, linesArray[i].y);
+                ctx.stroke();
+            }})
+        } 
+
         //Store data
-        function store(x, y, s, c){
+        function store(x, y, s, c, n){
             var line = {
                 "x": x,
                 "y": y,
                 "size": s,
-                "color": c
+                "color": c,
+                "ID": n
             }
             linesArray.push(line);
         }
 
         //function to import shapes in json format, based on x and y coords
         async function importFile(){
+            //fetch the test file
             const response = await fetch("test.json");
             const obj = await response.json();
+            
+            //save current state in order to restore after rotation is applied, helps to recover mouse to canvas coord tracking
+            ctx.save();
+            //rotation will be applied if slider is set to anything other than 0.
+            ctx.rotate(rotationAmount * Math.PI / 180);
             ctx.beginPath();
             for(var i in obj){
                 const coords = scale(obj[i]);
                 ctx.lineTo(coords.x, coords.y);
+                store(coords.x, coords.y, 1, importColor);
+                console.log(linesArray[linesArray.length-1])
             }
-            ctx.rotate(rotationAmount * Math.PI / 180)
             ctx.closePath();
             ctx.fillStyle = importColor;
             ctx.fill();
             ctx.fillStyle = currentBackground;
-            ctx.rotate(0 * Math.PI / 180)
+            ctx.restore();
         }
-
 
         //On mouse up
         function mouseup(){
             mouseDown = false;
+            count++;
             store();
         }
 
