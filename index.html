@@ -8,8 +8,10 @@
 
 
     <link rel="stylesheet" href="styles.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-Zenh87qX5JnK2Jl0vWa8Ck2rdkQ2Bzep5IDxbcnCeuOxjzrPF/et3URy9Bv1WTRi" crossorigin="anonymous">
     <!-- Importing font awesome for easy access to vector icons for buttons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css" integrity="sha512-xh6O/CkQoPOWDdYTDqeRdPCVd1SpvCA9XXcUnZS2FmJNp1coAFzvtCN9BmamE+4aHK8yyUHUSCcJHgXloTyT2A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.1/css/all.min.css" integrity="sha512-MV7K8+y+gLIBoVD59lQIYicR65iaqukzvf/nwasF0nqhPay5w/9lJmVM2hMDcnK1OnMGCdVK+iQrJ7lzPJQd1w==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 </head>
 <body>
     <button type="button" class="collapsible">Menu</button>
@@ -30,17 +32,28 @@
                 <input type="range" id="pencilSizeSlider" min="1" max="20" value="1" step="1">
             </div>
 
-
-
             <div class="functions">
                 <button id="eraserButton"><i class="fas fa-eraser"></i></button>
                 <button id="undoButton"><i class="fas fa-rotate-left"></i></button>
                 <button id="resetButton">reset</button>
             </div>
 
+
+
             <div class="functions">
-                <h4>Import SVG</h4>
+                <h4>Import JSON and shapes</h4>
                 <button id="importButton"><i class="fas fa-file-import"></i></button>
+                <div class="dropdown">
+                    <button class="btn border-dark btn-light dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="fa-solid fa-shapes"></i>
+                    </button>
+                    <ul class="dropdown-menu">
+                      <ol id="shape-square"><i class="fa-solid fa-square"></i> Square</ol>
+                      <ol id="shape-circle"><i class="fa-solid fa-circle"></i> Circle</ol>
+                      <ol id="shape-triangle"><i class="fa-solid fa-play"></i> Triangle</ol>
+                      <ol id="shape-heart"><i class="fa-solid fa-heart"></i> Heart</ol>
+                    </ul>
+                </div>
             </div>
 
             <div class="pencilSize">
@@ -65,6 +78,10 @@
                 <input type="range" id="importSizeSlider" min="0.1" max="4" value="1" step="0.1">
             </div>
 
+            <div class="functions">
+                <button id="downloadButton"><i class="fa-solid fa-download"></i></button>
+            </div>
+
 
         </div>
     </div>
@@ -72,23 +89,6 @@
 
 
     <script>
-        //UI collapsing feature
-        var coll = document.getElementsByClassName("collapsible");
-
-        for (var i = 0; i < coll.length; i++) {
-        coll[i].addEventListener("click", function() {
-            this.classList.toggle("active");
-            var content = this.nextElementSibling;
-            if (content.style.display === "block") {
-            content.style.display = "none";
-            } else {
-            content.style.display = "block";
-            }
-        });
-        }
-
-
-
 
         // Setting variables
         var mouseDown = false;
@@ -114,29 +114,37 @@
 
         //world coordinate variables
         var worldScale = 1;
-        const centerX = window.innerWidth /2;
+        const centerX = window.innerWidth / 2;
         const centerY = window.innerHeight / 2;
-
-        //stroke ID
-        let count = 0;
-
-        const circle = {
-            x: 350,
-            y: -210,
-            radius: 247
-        }
 
         const point = {
             x: centerX,
             y: centerY
         }
 
-        
+        //stroke ID
+        let count = 0;
+
+
+        //UI collapsing feature
+        var coll = document.getElementsByClassName("collapsible");
+
+        for (var i = 0; i < coll.length; i++) {
+        coll[i].addEventListener("click", function() {
+            this.classList.toggle("active");
+            var content = this.nextElementSibling;
+            if (content.style.display === "block") {
+            content.style.display = "none";
+            } else {
+            content.style.display = "block";
+            }
+        });
+        }
 
         // Initialize drawing canvas
         createCanvas();
 
-        // Button events
+        // Button events //
 
         //Color picker
         document.getElementById("pencilColorSelector").addEventListener('change',
@@ -199,6 +207,11 @@
             }
         )
 
+        //download the canvas
+        document.getElementById("downloadButton").addEventListener('click', function(){
+            downloadCanvas(this, "canvas", "canvas.png");
+        }, false);
+
         //Erase button 
         document.getElementById("eraserButton").addEventListener('click', erase);
 
@@ -209,6 +222,32 @@
         
         //importing button
         document.getElementById("importButton").addEventListener('click', importFile)
+
+        //create shapes buttons
+        //square
+        document.getElementById("shape-square").addEventListener('click', 
+            function(){
+                let newShape = new Model("square");
+                newShape.create();
+        });
+        //circle
+        document.getElementById("shape-circle").addEventListener('click', 
+            function(){
+                let newShape = new Model("circle");
+                newShape.create();
+        });
+        //triangle
+        document.getElementById("shape-triangle").addEventListener('click', 
+            function(){
+                let newShape = new Model("triangle");
+                newShape.create();
+        });
+        //heart
+        document.getElementById("shape-heart").addEventListener('click', 
+            function(){
+                let newShape = new Model("heart");
+                newShape.create();
+        });
 
         //Mouse event handlers
         canvas.addEventListener('mousedown',
@@ -228,6 +267,9 @@
 
         //Create canvas
         function createCanvas(){
+            //reset the array
+            linesArray = [];
+
             canvas.id = "canvas";
 			canvas.width = parseInt(window.innerWidth * 0.9);
 			canvas.height = parseInt(window.innerHeight * 0.9);
@@ -364,7 +406,6 @@
                 const coords = scale(obj[i]);
                 ctx.lineTo(coords.x, coords.y);
                 store(coords.x, coords.y, 1, importColor);
-                console.log(linesArray[linesArray.length-1])
             }
             ctx.closePath();
             ctx.fillStyle = importColor;
@@ -400,6 +441,101 @@
             };
         }
 
+        //inheritance concept
+        class Shape {
+            constructor(type){
+                this.shapename = type;
+            }
+            present(){
+                return "The shape is a " + this.shapename;
+            }
+        }
+
+        class Model extends Shape {
+            constructor(type, size, color){
+                super(type);
+                this.type = type;
+                this.size = currentImportSize;
+                this.color = importColor;
+            }
+            create(){
+                //save current state in order to restore after rotation is applied, helps to recover mouse to canvas coord tracking
+                ctx.save();
+                //rotation will be applied if slider is set to anything other than 0.
+                ctx.rotate(rotationAmount * Math.PI / 180);
+
+                //begin drawing shape
+                ctx.beginPath();
+                ctx.lineWidth = this.size * 10;
+                ctx.strokeStyle = this.color;
+                console.log("Trying to create a " + this.type);
+                switch (this.type) {
+                    case "square":
+                        ctx.rect(xAxisOffset, yAxisOffset, this.size * 100, this.size * 100);
+                        break;
+                    case "circle":
+                        ctx.arc(xAxisOffset, yAxisOffset, this.size * 100, 0, 2* Math.PI);
+                        break;
+                    case "triangle":
+                        ctx.moveTo(0, 0 );
+                        ctx.lineTo((200 * this.size), (200 * this.size));
+                        ctx.lineTo((-200 * this.size), (200 * this.size));
+                        ctx.lineTo(0 , 0 );
+                        break;
+                    case "heart":
+
+                        var width = 200 * this.size;
+                        var height = 200 * this.size;
+                        var x = 0, y = 0;
+                        var topCurveHeight = height * 0.3;
+                        ctx.moveTo(x, y + topCurveHeight);
+                        // top left curve
+                        ctx.bezierCurveTo(
+                            x, y, 
+                            x - width / 2, y, 
+                            x - width / 2, y + topCurveHeight
+                        );
+
+                        // bottom left curve
+                        ctx.bezierCurveTo(
+                            x - width / 2, y + (height + topCurveHeight) / 2, 
+                            x, y + (height + topCurveHeight) / 2, 
+                            x, y + height
+                        );
+
+                        // bottom right curve
+                        ctx.bezierCurveTo(
+                            x, y + (height + topCurveHeight) / 2, 
+                            x + width / 2, y + (height + topCurveHeight) / 2, 
+                            x + width / 2, y + topCurveHeight
+                        );
+
+                        // top right curve
+                        ctx.bezierCurveTo(
+                            x + width / 2, y, 
+                            x, y, 
+                            x, y + topCurveHeight
+                        );
+                        break;
+                    default:
+                        break;
+                }
+
+                ctx.stroke();
+                ctx.closePath();
+                ctx.fillStyle = this.color;
+                ctx.fill();
+                ctx.restore();
+            }
+        }
+		function downloadCanvas(link, canvas, filename) {
+            console.log("trying to export")
+			link.href = document.getElementById(canvas).toDataURL();
+			link.download = filename;
+            console.log(filename + " should have been downloaded.")
+		}
     </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-OERcA2EqjJCMA+/3y+gxIOqMEjwtxJY7qPCqsdltbNJuaOe923+mo//f6V8Qbsw3" crossorigin="anonymous"></script>
 </body>
 </html>
