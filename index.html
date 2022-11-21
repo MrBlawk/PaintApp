@@ -529,10 +529,8 @@
             }
         }
 		function downloadCanvas(link, canvas, filename) {
-            console.log("trying to export")
 			link.href = document.getElementById(canvas).toDataURL();
 			link.download = filename;
-            console.log(filename + " should have been downloaded.")
 		}
     </script>
 
