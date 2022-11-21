@@ -18,36 +18,38 @@
     <div class="content">
         <div id="menubar">
             <div class="colorButtons">
-                <h4>Colors</h4>
+                <h5>Colors</h5>
                 <input type="color" value="#000000" id="pencilColorSelector" class="colorSelector">
             </div>
 
             <div class="colorButtons">
-                <h4>Background color (refresh)</h4>
+                <h5>Background color</h5>
                 <input type="color" value="#dee1d1" id="backgroundColorSelector" class="colorSelector">
             </div>
 
             <div class="pencilSize">
-                <h4>Pencil size <span id="pencilSize">1</span></h4>
+                <h6>Pencil size <span id="pencilSize">1</span></h6>
                 <input type="range" id="pencilSizeSlider" min="1" max="20" value="1" step="1">
             </div>
 
             <div class="functions">
                 <button id="eraserButton"><i class="fas fa-eraser"></i></button>
-                <button id="undoButton"><i class="fas fa-rotate-left"></i></button>
-                <button id="resetButton">reset</button>
+                <button id="undoButton"><i class="fas fa-rotate-left"></i><h6>Undo last</h6></button>
+                <button id="resetButton">Reset</button>
             </div>
 
 
 
             <div class="functions">
-                <h4>Import JSON and shapes</h4>
-                <button id="importButton"><i class="fas fa-file-import"></i></button>
+                <h6>Create shapes & Import JSON</h6>
+                <button id="importButton"><i class="fas fa-file-import"></i><h6>Import JSON</h6></button>
                 <div class="dropdown">
                     <button class="btn border-dark btn-light dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
                         <i class="fa-solid fa-shapes"></i>
+                        <h6>Shapes</h6>
                     </button>
                     <ul class="dropdown-menu">
+                      <ol id="shape-line"><i class="fa-solid fa-grip-lines"></i> Line</ol>
                       <ol id="shape-square"><i class="fa-solid fa-square"></i> Square</ol>
                       <ol id="shape-circle"><i class="fa-solid fa-circle"></i> Circle</ol>
                       <ol id="shape-triangle"><i class="fa-solid fa-play"></i> Triangle</ol>
@@ -57,7 +59,7 @@
             </div>
 
             <div class="pencilSize">
-                <h4>Rotation degrees: <span id="rotationAmountId">0</span></h4>
+                <h6>Rotation degrees: <span id="rotationAmountId">0</span></h6>
                 <input type="range" id="rotationAmountSlider" min="0" max="360" value="0" step="1">
             </div>
 
@@ -68,17 +70,8 @@
                 <input type="number" step="1" id="y-axis">
             </div>
 
-            <div class="colorButtons">
-                <h4>Import Color</h4>
-                <input type="color" value="#ff0000" id="importColorSelector" class="colorSelector">
-            </div>
-
-            <div class="importScale">
-                <h4>Import size <span id="importSize">1</span></h4>
-                <input type="range" id="importSizeSlider" min="0.1" max="4" value="1" step="0.1">
-            </div>
-
             <div class="functions">
+                <h6>Download</h6>
                 <button id="downloadButton"><i class="fa-solid fa-download"></i></button>
             </div>
 
@@ -93,17 +86,21 @@
         // Setting variables
         var mouseDown = false;
         var eraseEnabled = false;
+        var lineEnabled = false;
         var canvas = document.createElement("canvas");
         var body = document.getElementsByTagName("body")[0];
         var sizeSlider = document.getElementById("pencilSize");
         var ctx = canvas.getContext('2d');
+
+        //array for tracking line tracing coordinates
+        let coords = [];
+
+        //array for tracking all created shapes
+        let shapes = [];
         
-        var linesArray = [];
         currentSize = 5;
         lastSize = 5; 
 
-        currentImportSize = 1;
-        var importColor = "#ff0000";
         xAxisOffset = 0;
         yAxisOffset = 0; 
         var rotationAmount;
@@ -192,20 +189,6 @@
             }
         )
 
-        //import color selector
-        document.getElementById("importColorSelector").addEventListener('change',
-            function(){
-                importColor = this.value;
-            }
-        )
-
-        //import json scale slider
-        document.getElementById("importSizeSlider").addEventListener('change', 
-            function(){
-                currentImportSize = this.value;
-                importSize.innerHTML = currentImportSize;
-            }
-        )
 
         //download the canvas
         document.getElementById("downloadButton").addEventListener('click', function(){
@@ -224,45 +207,52 @@
         document.getElementById("importButton").addEventListener('click', importFile)
 
         //create shapes buttons
+        //line
+        document.getElementById("shape-line").addEventListener('click',
+            function(){
+                if(!lineEnabled){
+                    lineEnabled = true;
+                    document.getElementById("shape-line").style.backgroundColor = "#8f8f8f"
+                }
+                else{
+                    lineEnabled = false;
+                    document.getElementById("shape-line").style.backgroundColor = "#fff"
+                }
+            });
         //square
         document.getElementById("shape-square").addEventListener('click', 
             function(){
-                let newShape = new Model("square");
-                newShape.create();
+                let newSquare = new Square();
+                newSquare.draw();
+                shapes.push(newSquare);
         });
         //circle
         document.getElementById("shape-circle").addEventListener('click', 
             function(){
-                let newShape = new Model("circle");
-                newShape.create();
+                let newCircle = new Circle();
+                newCircle.draw();
+                shapes.push(newCircle);
         });
         //triangle
         document.getElementById("shape-triangle").addEventListener('click', 
             function(){
-                let newShape = new Model("triangle");
-                newShape.create();
+                let newTriangle = new Triangle();
+                newTriangle.draw();
+                shapes.push(newTriangle);
         });
         //heart
         document.getElementById("shape-heart").addEventListener('click', 
             function(){
-                let newShape = new Model("heart");
-                newShape.create();
+                let newHeart = new Heart();
+                newHeart.draw();
+                shapes.push(newHeart);
         });
 
         //Mouse event handlers
-        canvas.addEventListener('mousedown',
-            function(){
-                mousedown(canvas, event);
-            }
-        );
-
-        canvas.addEventListener('mousemove',
-            function(){
-                mousemove(canvas, event);
-            }
-        );
-
-        canvas.addEventListener('mouseup', mouseup);
+        //get coords from mouse to draw line
+        canvas.addEventListener('click', function(){
+            drawLine(event);
+        });
 
 
         //Create canvas
@@ -303,7 +293,6 @@
                 currentColor = lastColor;
                 document.getElementById("eraserButton").style.backgroundColor = "#fff"
             }
-
         }
 
         //Get mouse position
@@ -315,80 +304,205 @@
             };
         }
 
-        //On mouse down start tracking line path
-        function mousedown(canvas, evt){
-			mouseDown = true;
-			var currentPosition = convert(getMousePos(canvas, evt));
-			ctx.moveTo(currentPosition.x, currentPosition.y)
-			ctx.beginPath();
-			ctx.lineWidth  = currentSize;
-			ctx.lineCap = "round";
-			ctx.strokeStyle = currentColor;
-        };
 
-        // On mouse move
-		function mousemove(canvas, evt) {
-            if(mouseDown){
-            var currentPosition = convert(getMousePos(canvas, evt));
-            ctx.lineTo(currentPosition.x, currentPosition.y)
-            ctx.stroke();
-            store(currentPosition.x, currentPosition.y, currentSize, currentColor, count);
+
+        //Store data DEPRECATED
+        // function store(x, y, s, c, n){
+        //     var line = {
+        //         "x": x,
+        //         "y": y,
+        //         "size": s,
+        //         "color": c,
+        //         "ID": n
+        //     }
+        //     linesArray.push(line);
+        // }
+
+
+        //converting window raster to world coordinates
+        function convert(coords) {
+            const x = (coords.x - centerX) / worldScale;
+            const y = (coords.y - centerY) / worldScale;
+            return { 
+                x: x, 
+                y: y
+            };
+        }
+
+        //idea of a function to scale json coordinates according to screen size
+        function scale(coords){
+            let x = (coords.x * currentSize) + parseInt(xAxisOffset); //adjusted so 0,0 is center of screen.
+            let y = (coords.y * currentSize) + parseInt(yAxisOffset * -1); //adjusted to flip y coords, offset makes sure 0,0 is center of screen
+            return {
+                x: x,
+                y: y
+            };
+        }
+
+        //inheritance concept
+        class Shape {
+            constructor(type){
+                this.shapename = type;
+
+                // This became unnecessary after Raymond his example.. but why?
+                // ctx.lineWidth = currentSize;
+                // ctx.strokeStyle = currentColor;
+                // ctx.fillStyle = currentColor
+                console.log(shapes);
             }
+
+            present(type){
+                console.log("drawing shape: " + this.type);
+            }
+
+            draw(){};
+            
         }
 
-        //example removing from array
-        // var index = list.map(x => {
-        // return x.Id;
-        // }).indexOf(id);
+        class Square extends Shape {
+            constructor (type){
+                super(type);
+                this.shapename = "Square";
+            }
 
-        // list.splice(index, 1);
-        // console.log(list);
-
-        //work in progress
-        function undoLast(){
-            console.log(count);
-            console.log(linesArray.length);
-            linesArray = linesArray.filter((elem) => elem.n !== count);
-            count--;
-            console.log(linesArray.length);
-            drawPaths();
-            console.log(count);
-        }
-
-        //work in progress / drawing all stores lines from linesArray
-        function drawPaths(){
-        // delete everything
-        createCanvas();
-        // draw all the paths in the paths array
-        // linesArray.forEach(line=>{
-        //     ctx.beginPath(); 
-        //     for(let i = 0; i < line.length; i++){
-        //             ctx.lineTo(line[i].x,line[i].y); 
-        //             ctx.strokeStyle = line[i].c;
-        //             ctx.lineWidth = line[i].s;
-        //             console.log(line[i].c)
-        //         }
-        //         ctx.stroke();
-        //     })
-
-        linesArray.forEach(function(){
-            for(let i = 0; i < linesArray.length; i++){
+            draw(){
+                ctx.save();
+                ctx.lineWidth = currentSize;
+                ctx.strokeStyle = currentColor;
+                ctx.fillStyle = currentColor
+                ctx.rotate(rotationAmount * Math.PI / 180);
                 ctx.beginPath();
-                ctx.lineTo(linesArray[i].x, linesArray[i].y);
+                ctx.rect(xAxisOffset, yAxisOffset, currentSize * 10, currentSize * 10);
                 ctx.stroke();
-            }})
-        } 
-
-        //Store data
-        function store(x, y, s, c, n){
-            var line = {
-                "x": x,
-                "y": y,
-                "size": s,
-                "color": c,
-                "ID": n
+                ctx.closePath();
+                ctx.fill();
+                ctx.restore();
             }
-            linesArray.push(line);
+        }
+
+        class Circle extends Shape {
+            constructor(type){
+                super(type);
+                this.type = "Circle";
+
+            }
+
+            draw(){
+                ctx.save();
+                ctx.lineWidth = currentSize;
+                ctx.strokeStyle = currentColor;
+                ctx.fillStyle = currentColor
+                ctx.beginPath();
+                ctx.arc(xAxisOffset, yAxisOffset, currentSize * 10, 0, 2* Math.PI);
+                ctx.stroke();
+                ctx.closePath();
+                ctx.fill();
+                ctx.restore();
+            }
+        }
+
+        class Triangle extends Shape {
+            constructor(type){
+                super(type);
+                this.type = "Triangle";
+
+            }
+
+            draw(){
+                ctx.save();
+
+                ctx.lineWidth = currentSize;
+                ctx.strokeStyle = currentColor;
+                ctx.fillStyle = currentColor
+                ctx.beginPath();
+                ctx.moveTo(0, 0 );
+                ctx.lineTo((20 * currentSize), (20 * currentSize));
+                ctx.lineTo((-20 * currentSize), (20 * currentSize));
+                ctx.lineTo(0 , 0 );
+                ctx.stroke();
+                ctx.closePath();
+                ctx.fill();
+                ctx.restore();
+            }
+        }
+
+        class Heart extends Shape {
+            constructor(type){
+                super(type);
+                this.type = "Heart";
+
+            }
+
+            draw(){
+                ctx.save();
+
+                ctx.lineWidth = currentSize;
+                ctx.strokeStyle = currentColor;
+                ctx.fillStyle = currentColor
+                ctx.beginPath();
+                
+                var width = 20 * currentSize;
+                var height = 20 * currentSize;
+                var x = 0, y = 0;
+                var topCurveHeight = height * 0.3;
+                ctx.moveTo(x, y + topCurveHeight);
+                // top left curve
+                ctx.bezierCurveTo(
+                    x, y, 
+                    x - width / 2, y, 
+                    x - width / 2, y + topCurveHeight
+                );
+
+                // bottom left curve
+                ctx.bezierCurveTo(
+                    x - width / 2, y + (height + topCurveHeight) / 2, 
+                    x, y + (height + topCurveHeight) / 2, 
+                    x, y + height
+                );
+
+                // bottom right curve
+                ctx.bezierCurveTo(
+                    x, y + (height + topCurveHeight) / 2, 
+                    x + width / 2, y + (height + topCurveHeight) / 2, 
+                    x + width / 2, y + topCurveHeight
+                );
+
+                // top right curve
+                ctx.bezierCurveTo(
+                    x + width / 2, y, 
+                    x, y, 
+                    x, y + topCurveHeight
+                );
+
+
+                ctx.stroke();
+                ctx.closePath();
+                ctx.fill();
+                ctx.restore();
+            }
+        }
+
+        //function for tracing two coordinates and drawing a line in between
+        function drawLine(event){
+            console.log("Clicked canvas.");
+        
+            if(lineEnabled){
+                var coord = {"x": event.x, "y": event.y};
+                coords.push(convert(getMousePos(canvas, event)));
+                var max = coords.length -1;
+                if(typeof coords[max - 1] !== "undefined"){
+                    ctx.beginPath();
+                    ctx.lineWidth = currentSize;
+                    ctx.strokeStyle = currentColor;
+                    ctx.lineCap = "round";
+                    ctx.moveTo(coords[max].x, coords[max].y);
+                    ctx.lineTo(coords[max - 1].x, coords[max - 1].y);
+                    ctx.stroke();  	
+                };
+            }
+            else if(!lineEnabled){
+                coords = [];
+            }
         }
 
         //function to import shapes in json format, based on x and y coords
@@ -405,130 +519,73 @@
             for(var i in obj){
                 const coords = scale(obj[i]);
                 ctx.lineTo(coords.x, coords.y);
-                store(coords.x, coords.y, 1, importColor);
+                store(coords.x, coords.y, 1, currentColor);
             }
             ctx.closePath();
-            ctx.fillStyle = importColor;
+            ctx.fillStyle = currentColor;
             ctx.fill();
             ctx.fillStyle = currentBackground;
             ctx.restore();
         }
 
-        //On mouse up
-        function mouseup(){
-            mouseDown = false;
-            count++;
-            store();
+
+        let r = new Square()
+        let c = new Circle()
+
+        r.draw();
+        c.draw();
+
+
+        shapes = [r,c, new Circle()]
+
+        //wat doet dit?
+        function draw (s) {
+            s.draw();
+        }
+        //objects.map(draw)
+
+
+        //work in progress
+        function undoLast(){
+            shapes.pop();
+            createCanvas();
+            console.log(shapes);
+            shapes.map(draw);
         }
 
-        //converting window raster to world coordinates
-        function convert(coords) {
-            const x = (coords.x - centerX) / worldScale;
-            const y = (coords.y - centerY) / worldScale;
-            return { 
-                x: x, 
-                y: y
-            };
-        }
+        //saving function
 
-        //idea of a function to scale json coordinates according to screen size
-        function scale(coords){
-            let x = (coords.x * currentImportSize) + parseInt(xAxisOffset); //adjusted so 0,0 is center of screen.
-            let y = (coords.y * currentImportSize) + parseInt(yAxisOffset * -1); //adjusted to flip y coords, offset makes sure 0,0 is center of screen
-            return {
-                x: x,
-                y: y
-            };
-        }
+		function save() {
+			localStorage.removeItem("savedCanvas");
+			localStorage.setItem("savedCanvas", JSON.stringify(linesArray));
+			console.log("Saved canvas!");
+		}
 
-        //inheritance concept
-        class Shape {
-            constructor(type){
-                this.shapename = type;
-            }
-            present(){
-                return "The shape is a " + this.shapename;
-            }
-        }
+        //loading from localstorage
 
-        class Model extends Shape {
-            constructor(type, size, color){
-                super(type);
-                this.type = type;
-                this.size = currentImportSize;
-                this.color = importColor;
-            }
-            create(){
-                //save current state in order to restore after rotation is applied, helps to recover mouse to canvas coord tracking
-                ctx.save();
-                //rotation will be applied if slider is set to anything other than 0.
-                ctx.rotate(rotationAmount * Math.PI / 180);
+		function load() {
+			if (localStorage.getItem("savedCanvas") != null) {
+				linesArray = JSON.parse(localStorage.savedCanvas);
+				var lines = JSON.parse(localStorage.getItem("savedCanvas"));
+				for (var i = 1; i < lines.length; i++) {
+					ctx.beginPath();
+					ctx.moveTo(linesArray[i-1].x, linesArray[i-1].y);
+					ctx.lineWidth  = linesArray[i].size;
+					ctx.lineCap = "round";
+					ctx.strokeStyle = linesArray[i].color;
+					ctx.lineTo(linesArray[i].x, linesArray[i].y);
+					ctx.stroke();
+				}
+				console.log("Canvas loaded.");
+			}
+			else {
+				console.log("No canvas in memory!");
+			}
+		}
 
-                //begin drawing shape
-                ctx.beginPath();
-                ctx.lineWidth = this.size * 10;
-                ctx.strokeStyle = this.color;
-                console.log("Trying to create a " + this.type);
-                switch (this.type) {
-                    case "square":
-                        ctx.rect(xAxisOffset, yAxisOffset, this.size * 100, this.size * 100);
-                        break;
-                    case "circle":
-                        ctx.arc(xAxisOffset, yAxisOffset, this.size * 100, 0, 2* Math.PI);
-                        break;
-                    case "triangle":
-                        ctx.moveTo(0, 0 );
-                        ctx.lineTo((200 * this.size), (200 * this.size));
-                        ctx.lineTo((-200 * this.size), (200 * this.size));
-                        ctx.lineTo(0 , 0 );
-                        break;
-                    case "heart":
-
-                        var width = 200 * this.size;
-                        var height = 200 * this.size;
-                        var x = 0, y = 0;
-                        var topCurveHeight = height * 0.3;
-                        ctx.moveTo(x, y + topCurveHeight);
-                        // top left curve
-                        ctx.bezierCurveTo(
-                            x, y, 
-                            x - width / 2, y, 
-                            x - width / 2, y + topCurveHeight
-                        );
-
-                        // bottom left curve
-                        ctx.bezierCurveTo(
-                            x - width / 2, y + (height + topCurveHeight) / 2, 
-                            x, y + (height + topCurveHeight) / 2, 
-                            x, y + height
-                        );
-
-                        // bottom right curve
-                        ctx.bezierCurveTo(
-                            x, y + (height + topCurveHeight) / 2, 
-                            x + width / 2, y + (height + topCurveHeight) / 2, 
-                            x + width / 2, y + topCurveHeight
-                        );
-
-                        // top right curve
-                        ctx.bezierCurveTo(
-                            x + width / 2, y, 
-                            x, y, 
-                            x, y + topCurveHeight
-                        );
-                        break;
-                    default:
-                        break;
-                }
-
-                ctx.stroke();
-                ctx.closePath();
-                ctx.fillStyle = this.color;
-                ctx.fill();
-                ctx.restore();
-            }
-        }
+        //download the canvas
 		function downloadCanvas(link, canvas, filename) {
+            save();
 			link.href = document.getElementById(canvas).toDataURL();
 			link.download = filename;
 		}
