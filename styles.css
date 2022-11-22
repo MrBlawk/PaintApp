@@ -11,7 +11,7 @@ div#menubar{
     left: 0;
     width: 100px;
     padding-left: 20px;
-    top: 10%;
+    top: 5%;
 }
 
 canvas#canvas{
@@ -48,12 +48,11 @@ input{
   
   /* Add a background color to the button if it is clicked on (add the .active class with JS), and when you move the mouse over it (hover) */
   .active, .collapsible:hover {
-    background-color: #ccc;
+    background-color: rgba(135, 135, 135, 0.595);
   }
   
   /* Style the collapsible content. Note: hidden by default */
   .content {
-    padding: 10%;
     display: block;
     overflow: hidden;
     background-color: #f1f1f1;
@@ -63,7 +62,7 @@ input{
 
 .colorButtons {
     display: block;
-    margin: 7%;
+    margin: 2% 7%;
 }
 
 .toolsButtons button{

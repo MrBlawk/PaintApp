@@ -18,13 +18,22 @@
     <div class="content">
         <div id="menubar">
             <div class="colorButtons">
-                <h5>Colors</h5>
+                <h6>Shape Color</h6>
                 <input type="color" value="#000000" id="pencilColorSelector" class="colorSelector">
             </div>
 
             <div class="colorButtons">
-                <h5>Background color</h5>
+                <h6>Background color</h6>
                 <input type="color" value="#dee1d1" id="backgroundColorSelector" class="colorSelector">
+            </div>
+            <div class="functions">
+                <h6>Create shapes & Import JSON</h6>
+                <button id="importButton"><i class="fas fa-file-import"></i><h6>Import JSON</h6></button>
+                <button id="shape-line"><i class="fa-solid fa-grip-lines"></i></button>
+                <button id="shape-square"><i class="fa-solid fa-square"></i></button>
+                <button id="shape-circle"><i class="fa-solid fa-circle"></i></button>
+                <button id="shape-triangle"><i class="fa-solid fa-play"></i></button>
+                <button id="shape-heart"><i class="fa-solid fa-heart"></i></button>
             </div>
 
             <div class="pencilSize">
@@ -36,26 +45,6 @@
                 <button id="eraserButton"><i class="fas fa-eraser"></i></button>
                 <button id="undoButton"><i class="fas fa-rotate-left"></i><h6>Undo last</h6></button>
                 <button id="resetButton">Reset</button>
-            </div>
-
-
-
-            <div class="functions">
-                <h6>Create shapes & Import JSON</h6>
-                <button id="importButton"><i class="fas fa-file-import"></i><h6>Import JSON</h6></button>
-                <div class="dropdown">
-                    <button class="btn border-dark btn-light dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        <i class="fa-solid fa-shapes"></i>
-                        <h6>Shapes</h6>
-                    </button>
-                    <ul class="dropdown-menu">
-                      <ol id="shape-line"><i class="fa-solid fa-grip-lines"></i> Line</ol>
-                      <ol id="shape-square"><i class="fa-solid fa-square"></i> Square</ol>
-                      <ol id="shape-circle"><i class="fa-solid fa-circle"></i> Circle</ol>
-                      <ol id="shape-triangle"><i class="fa-solid fa-play"></i> Triangle</ol>
-                      <ol id="shape-heart"><i class="fa-solid fa-heart"></i> Heart</ol>
-                    </ul>
-                </div>
             </div>
 
             <div class="pencilSize">
@@ -93,7 +82,9 @@
         var ctx = canvas.getContext('2d');
 
         //array for tracking line tracing coordinates
-        let coords = [];
+        let lastClick = [0, 0];
+        let currentPosition;
+        let clicks = 0;
 
         //array for tracking all created shapes
         let shapes = [];
@@ -140,6 +131,13 @@
 
         // Initialize drawing canvas
         createCanvas();
+
+
+        //canvas event handlers
+        canvas.addEventListener('mousedown', function(){
+            mousedown(canvas, event)
+        });
+
 
         // Button events //
 
@@ -195,13 +193,13 @@
             downloadCanvas(this, "canvas", "canvas.png");
         }, false);
 
-        //Erase button 
-        document.getElementById("eraserButton").addEventListener('click', erase);
-
         //reset canvas button
-        document.getElementById("resetButton").addEventListener('click', createCanvas);
+        document.getElementById("resetButton").addEventListener('click', resetCanvas);
 
-        document.getElementById("undoButton").addEventListener('click', undoLast);
+        document.getElementById("undoButton").addEventListener('click', function(){
+            popLast(),
+            redraw()
+        });
         
         //importing button
         document.getElementById("importButton").addEventListener('click', importFile)
@@ -213,6 +211,9 @@
                 if(!lineEnabled){
                     lineEnabled = true;
                     document.getElementById("shape-line").style.backgroundColor = "#8f8f8f"
+                    let newLine = new Line();
+                    newLine.draw();
+                    shapes.push(newLine);
                 }
                 else{
                     lineEnabled = false;
@@ -248,18 +249,8 @@
                 shapes.push(newHeart);
         });
 
-        //Mouse event handlers
-        //get coords from mouse to draw line
-        canvas.addEventListener('click', function(){
-            drawLine(event);
-        });
-
-
         //Create canvas
         function createCanvas(){
-            //reset the array
-            linesArray = [];
-
             canvas.id = "canvas";
 			canvas.width = parseInt(window.innerWidth * 0.9);
 			canvas.height = parseInt(window.innerHeight * 0.9);
@@ -277,23 +268,11 @@
             ctx.translate(centerX, centerY);
         }
 
-        //Erase function, fills everything with current set background color
-        function erase(btn){
-            if(!eraseEnabled){
-                eraseEnabled = true;
-                lastSize = currentSize;
-                lastColor = currentColor;
-                currentSize = 50;
-                currentColor = ctx.fillStyle;
-                document.getElementById("eraserButton").style.backgroundColor = "#8f8f8f"
-            }
-            else{
-                eraseEnabled = false;
-                currentSize = lastSize;
-                currentColor = lastColor;
-                document.getElementById("eraserButton").style.backgroundColor = "#fff"
-            }
+        function resetCanvas(){
+            createCanvas();
+            shapes = [];
         }
+
 
         //Get mouse position
         function getMousePos(canvas, evt){
@@ -303,21 +282,6 @@
                 y: evt.clientY - rect.top
             };
         }
-
-
-
-        //Store data DEPRECATED
-        // function store(x, y, s, c, n){
-        //     var line = {
-        //         "x": x,
-        //         "y": y,
-        //         "size": s,
-        //         "color": c,
-        //         "ID": n
-        //     }
-        //     linesArray.push(line);
-        // }
-
 
         //converting window raster to world coordinates
         function convert(coords) {
@@ -339,12 +303,14 @@
             };
         }
 
+
+
         //inheritance concept
         class Shape {
             constructor(type){
                 this.shapename = type;
 
-                // This became unnecessary after Raymond his example.. but why?
+                // This became unnecessary after Raymonds example.. but why?
                 // ctx.lineWidth = currentSize;
                 // ctx.strokeStyle = currentColor;
                 // ctx.fillStyle = currentColor
@@ -384,7 +350,6 @@
             constructor(type){
                 super(type);
                 this.type = "Circle";
-
             }
 
             draw(){
@@ -430,7 +395,6 @@
             constructor(type){
                 super(type);
                 this.type = "Heart";
-
             }
 
             draw(){
@@ -482,28 +446,36 @@
             }
         }
 
-        //function for tracing two coordinates and drawing a line in between
-        function drawLine(event){
-            console.log("Clicked canvas.");
-        
+
+        canvas.addEventListener('click', drawLine, false);
+
+        function drawLine(e) {
             if(lineEnabled){
-                var coord = {"x": event.x, "y": event.y};
-                coords.push(convert(getMousePos(canvas, event)));
-                var max = coords.length -1;
-                if(typeof coords[max - 1] !== "undefined"){
-                    ctx.beginPath();
-                    ctx.lineWidth = currentSize;
-                    ctx.strokeStyle = currentColor;
-                    ctx.lineCap = "round";
-                    ctx.moveTo(coords[max].x, coords[max].y);
-                    ctx.lineTo(coords[max - 1].x, coords[max - 1].y);
-                    ctx.stroke();  	
-                };
+                x = convert(getMousePos(canvas, e)).x;
+            y = convert(getMousePos(canvas, e)).y;
+            if (clicks != 1) {
+                //to track clicks so line does not get rendered with only one stored coordinate, waits for second click
+                clicks++;
+            } else {
+                ctx.save();
+                ctx.lineWidth = currentSize;
+                ctx.strokeStyle = currentColor;
+                ctx.fillStyle = currentColor
+                ctx.beginPath();
+                ctx.moveTo(lastClick[0], lastClick[1]);
+                ctx.lineTo(x, y, 6);
+                ctx.lineCap ="round";
+                ctx.stroke();
+                ctx.closePath();
+                ctx.fill();
+                ctx.restore();
+
+                //reset clicks in order to separate lines
+                clicks = 0;
             }
-            else if(!lineEnabled){
-                coords = [];
+            lastClick = [x, y];
             }
-        }
+        };
 
         //function to import shapes in json format, based on x and y coords
         async function importFile(){
@@ -519,7 +491,6 @@
             for(var i in obj){
                 const coords = scale(obj[i]);
                 ctx.lineTo(coords.x, coords.y);
-                store(coords.x, coords.y, 1, currentColor);
             }
             ctx.closePath();
             ctx.fillStyle = currentColor;
@@ -528,64 +499,40 @@
             ctx.restore();
         }
 
-
-        let r = new Square()
-        let c = new Circle()
-
-        r.draw();
-        c.draw();
-
-
-        shapes = [r,c, new Circle()]
-
-        //wat doet dit?
+        //wat doet dit? Het magische regeltje dat ervoor zorgt dat de undo functie werkt.......
         function draw (s) {
             s.draw();
         }
-        //objects.map(draw)
 
+        //on mouse down get canvas coordinates and store in
+		function mousedown(canvas, evt) {
+			currentPosition = convert(getMousePos(canvas, evt));
 
-        //work in progress
-        function undoLast(){
-            shapes.pop();
-            createCanvas();
-            console.log(shapes);
-            shapes.map(draw);
+            x = currentPosition.x;
+            y = currentPosition.y;
+
+            return [x, y];
+
         }
 
-        //saving function
+        //will pop latest action in array
+        function popLast(){
+            if (shapes.length <= 1) {
+                shapes = [];
+            }
+            shapes.pop();
+            console.log(shapes.length);
+        }
 
-		function save() {
-			localStorage.removeItem("savedCanvas");
-			localStorage.setItem("savedCanvas", JSON.stringify(linesArray));
-			console.log("Saved canvas!");
-		}
-
-        //loading from localstorage
-
-		function load() {
-			if (localStorage.getItem("savedCanvas") != null) {
-				linesArray = JSON.parse(localStorage.savedCanvas);
-				var lines = JSON.parse(localStorage.getItem("savedCanvas"));
-				for (var i = 1; i < lines.length; i++) {
-					ctx.beginPath();
-					ctx.moveTo(linesArray[i-1].x, linesArray[i-1].y);
-					ctx.lineWidth  = linesArray[i].size;
-					ctx.lineCap = "round";
-					ctx.strokeStyle = linesArray[i].color;
-					ctx.lineTo(linesArray[i].x, linesArray[i].y);
-					ctx.stroke();
-				}
-				console.log("Canvas loaded.");
-			}
-			else {
-				console.log("No canvas in memory!");
-			}
-		}
+        //will redraw the canvas with, useful for when background color changed.
+        function redraw(){
+                createCanvas();
+                shapes.map(draw);
+                console.log(shapes);
+        }
 
         //download the canvas
 		function downloadCanvas(link, canvas, filename) {
-            save();
 			link.href = document.getElementById(canvas).toDataURL();
 			link.download = filename;
 		}
