@@ -86,6 +86,9 @@
         let currentPosition;
         let clicks = 0;
 
+        //variable for storing the currently selected shape
+        let selected;
+
         //array for tracking all created shapes
         let shapes = [];
         
@@ -137,6 +140,8 @@
         canvas.addEventListener('mousedown', function(){
             mousedown(canvas, event)
         });
+
+        canvas.addEventListener('mousemove',function() {mousemove(canvas, event);});
 
 
         // Button events //
@@ -375,7 +380,6 @@
 
             draw(){
                 ctx.save();
-
                 ctx.lineWidth = currentSize;
                 ctx.strokeStyle = currentColor;
                 ctx.fillStyle = currentColor
@@ -399,7 +403,6 @@
 
             draw(){
                 ctx.save();
-
                 ctx.lineWidth = currentSize;
                 ctx.strokeStyle = currentColor;
                 ctx.fillStyle = currentColor
@@ -446,13 +449,28 @@
             }
         }
 
+        //skeleton class for adding line to shapes array
+        class Line extends Shape {
+            constructor(type){
+                super(type);
+                this.type = "Line";
+            }
 
-        canvas.addEventListener('click', drawLine, false);
+            draw(){
+                canvas.addEventListener('click', drawLine, false);
+
+                if(clicks >= 2)
+                {
+                    canvas.removeEventListener('click', drawLine, false);
+                }
+            }
+        }
+
 
         function drawLine(e) {
             if(lineEnabled){
                 x = convert(getMousePos(canvas, e)).x;
-            y = convert(getMousePos(canvas, e)).y;
+                y = convert(getMousePos(canvas, e)).y;
             if (clicks != 1) {
                 //to track clicks so line does not get rendered with only one stored coordinate, waits for second click
                 clicks++;
@@ -512,7 +530,12 @@
             y = currentPosition.y;
 
             return [x, y];
+        }
 
+		function mousemove(canvas, evt) {
+            if(isMouseDown){
+                currentPosition = getMousePos(canvas, evt);
+            }
         }
 
         //will pop latest action in array
