@@ -190,14 +190,12 @@
 
         //reset canvas button
         document.getElementById("resetButton").addEventListener('click', function(){
+            screen.clear();
             screen.createCanvas();
-            screen.draw();
         });
 
         document.getElementById("undoButton").addEventListener('click', function(){
-            screen.popLast(),
-            screen.createCanvas(),
-            screen.draw()
+            screen.popLast();
         });
         
         //importing button
@@ -289,9 +287,8 @@
                 console.log("last click: " + lastClick);
                 //reset clicks in order to separate lines
                 clicks = 0;
-                let newLine = new Line();
-                newLine.draw(firstClick, lastClick);
-                shapes.push(newLine);
+                screen.addShape(new Line());
+                console.log("line added");
             }
             }
         };
@@ -428,12 +425,14 @@
             constructor(type){
                 super(type);
                 this.type = "Line";
+                this.draw();
+
             }
 
             draw(){
                 this.prepare();
-                ctx.moveTo(firstClick[0], firstClick[1]);
-                ctx.lineTo(lastClick[0], lastClick[1], 6);
+                ctx.moveTo(firstCoords[0], firstCoords[1]);
+                ctx.lineTo(lastCoords[0], lastCoords[1], 6);
                 ctx.lineCap ="round";
                 this.postparation();
             }
@@ -449,12 +448,20 @@
 
             popLast(){
                 if (shapes.length <= 1) {
-                shapes = [];
+                    shapes = [];
+                    console.log(shapes.length);
                 }
                 else{
                     shapes.pop();
                     console.log(shapes.length);
                 }
+
+                this.createCanvas();
+                this.draw();
+            }
+
+            clear(){
+                shapes = [];
             }
 
             createCanvas(){
