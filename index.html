@@ -63,15 +63,12 @@
                 <h6>Download</h6>
                 <button id="downloadButton"><i class="fa-solid fa-download"></i></button>
             </div>
-
-
         </div>
     </div>
     
 
 
     <script>
-
         // Setting variables
         var mouseDown = false;
         var eraseEnabled = false;
@@ -82,12 +79,10 @@
         var ctx = canvas.getContext('2d');
 
         //array for tracking line tracing coordinates
+        let firstClick = [0, 0];
         let lastClick = [0, 0];
         let currentPosition;
         let clicks = 0;
-
-        //variable for storing the currently selected shape
-        let selected;
 
         //array for tracking all created shapes
         let shapes = [];
@@ -132,19 +127,14 @@
         });
         }
 
-        // Initialize drawing canvas
-        createCanvas();
-
-
         //canvas event handlers
         canvas.addEventListener('mousedown', function(){
             mousedown(canvas, event)
         });
 
-        canvas.addEventListener('mousemove',function() {mousemove(canvas, event);});
-
-
+        ///////////////////
         // Button events //
+        ///////////////////
 
         //Color picker
         document.getElementById("pencilColorSelector").addEventListener('change',
@@ -199,15 +189,21 @@
         }, false);
 
         //reset canvas button
-        document.getElementById("resetButton").addEventListener('click', resetCanvas);
+        document.getElementById("resetButton").addEventListener('click', function(){
+            screen.createCanvas();
+            screen.draw();
+        });
 
         document.getElementById("undoButton").addEventListener('click', function(){
-            popLast(),
-            redraw()
+            screen.popLast(),
+            screen.createCanvas(),
+            screen.draw()
         });
         
         //importing button
-        document.getElementById("importButton").addEventListener('click', importFile)
+        document.getElementById("importButton").addEventListener('click', function(){
+            screen.importJSON();
+        })
 
         //create shapes buttons
         //line
@@ -216,68 +212,38 @@
                 if(!lineEnabled){
                     lineEnabled = true;
                     document.getElementById("shape-line").style.backgroundColor = "#8f8f8f"
-                    let newLine = new Line();
-                    newLine.draw();
-                    shapes.push(newLine);
+                    canvas.addEventListener('click', getLineCoordsAndDraw, false);
                 }
                 else{
                     lineEnabled = false;
                     document.getElementById("shape-line").style.backgroundColor = "#fff"
+                    canvas.removeEventListener('click', getLineCoordsAndDraw, false);
                 }
             });
         //square
         document.getElementById("shape-square").addEventListener('click', 
             function(){
-                let newSquare = new Square();
-                newSquare.draw();
-                shapes.push(newSquare);
+                screen.addShape(new Square());
         });
         //circle
         document.getElementById("shape-circle").addEventListener('click', 
             function(){
-                let newCircle = new Circle();
-                newCircle.draw();
-                shapes.push(newCircle);
+                screen.addShape(new Circle());
         });
         //triangle
         document.getElementById("shape-triangle").addEventListener('click', 
             function(){
-                let newTriangle = new Triangle();
-                newTriangle.draw();
-                shapes.push(newTriangle);
+                screen.addShape(new Triangle());
         });
         //heart
         document.getElementById("shape-heart").addEventListener('click', 
             function(){
-                let newHeart = new Heart();
-                newHeart.draw();
-                shapes.push(newHeart);
+                screen.addShape(new Heart());
         });
 
-        //Create canvas
-        function createCanvas(){
-            canvas.id = "canvas";
-			canvas.width = parseInt(window.innerWidth * 0.9);
-			canvas.height = parseInt(window.innerHeight * 0.9);
-
-            canvas.style.border = "1px";
-            canvas.style.zIndex = 8;
-			canvas.style.position = "absolute";
-
-            ctx.fillStyle = currentBackground;
-            ctx.fillRect(0, 0, point.x * 2, point.y * 2);
-
-            body.appendChild(canvas);
-
-            //fix coordinates of canvas to world coordinates
-            ctx.translate(centerX, centerY);
-        }
-
-        function resetCanvas(){
-            createCanvas();
-            shapes = [];
-        }
-
+        ///////////////
+        // functions //
+        ///////////////
 
         //Get mouse position
         function getMousePos(canvas, evt){
@@ -308,25 +274,61 @@
             };
         }
 
+        //function to store two seperate mouse coordinates for drawing a line
+        function getLineCoordsAndDraw(e) {
+            if(lineEnabled){
+                x = convert(getMousePos(canvas, e)).x;
+                y = convert(getMousePos(canvas, e)).y;
+            if (clicks != 1) {
+                firstClick = [x, y];
+                console.log("first click: " + firstClick);
+                //to track clicks so line does not get rendered with only one stored coordinate, waits for second click
+                clicks++;
+            } else {
+                lastClick = [x, y];
+                console.log("last click: " + lastClick);
+                //reset clicks in order to separate lines
+                clicks = 0;
+                let newLine = new Line();
+                newLine.draw(firstClick, lastClick);
+                shapes.push(newLine);
+            }
+            }
+        };
 
+
+        //get a bounding rectangle for all shapes
+        class CanvasRectangle {
+            constructor(){
+                let originX, originY;
+                let width, height;
+            }
+        }
 
         //inheritance concept
         class Shape {
             constructor(type){
                 this.shapename = type;
-
-                // This became unnecessary after Raymonds example.. but why?
-                // ctx.lineWidth = currentSize;
-                // ctx.strokeStyle = currentColor;
-                // ctx.fillStyle = currentColor
                 console.log(shapes);
             }
 
-            present(type){
-                console.log("drawing shape: " + this.type);
-            }
+            prepare(){
+                ctx.save();
+                ctx.lineWidth = currentSize;
+                ctx.strokeStyle = currentColor;
+                ctx.fillStyle = currentColor
+                ctx.rotate(rotationAmount * Math.PI / 180);
+                ctx.beginPath();
+            };
 
             draw(){};
+
+            postparation(){
+                ctx.stroke();
+                ctx.closePath();
+                ctx.fill();
+                ctx.restore();
+            };
             
         }
 
@@ -334,40 +336,27 @@
             constructor (type){
                 super(type);
                 this.shapename = "Square";
+                this.draw();
             }
 
             draw(){
-                ctx.save();
-                ctx.lineWidth = currentSize;
-                ctx.strokeStyle = currentColor;
-                ctx.fillStyle = currentColor
-                ctx.rotate(rotationAmount * Math.PI / 180);
-                ctx.beginPath();
+                this.prepare();
                 ctx.rect(xAxisOffset, yAxisOffset, currentSize * 10, currentSize * 10);
-                ctx.stroke();
-                ctx.closePath();
-                ctx.fill();
-                ctx.restore();
-            }
+                this.postparation();
+            };
         }
 
         class Circle extends Shape {
             constructor(type){
                 super(type);
                 this.type = "Circle";
+                this.draw();
             }
 
             draw(){
-                ctx.save();
-                ctx.lineWidth = currentSize;
-                ctx.strokeStyle = currentColor;
-                ctx.fillStyle = currentColor
-                ctx.beginPath();
+                this.prepare();
                 ctx.arc(xAxisOffset, yAxisOffset, currentSize * 10, 0, 2* Math.PI);
-                ctx.stroke();
-                ctx.closePath();
-                ctx.fill();
-                ctx.restore();
+                this.postparation();
             }
         }
 
@@ -375,23 +364,16 @@
             constructor(type){
                 super(type);
                 this.type = "Triangle";
-
+                this.draw();
             }
 
             draw(){
-                ctx.save();
-                ctx.lineWidth = currentSize;
-                ctx.strokeStyle = currentColor;
-                ctx.fillStyle = currentColor
-                ctx.beginPath();
+                this.prepare();
                 ctx.moveTo(0, 0 );
                 ctx.lineTo((20 * currentSize), (20 * currentSize));
                 ctx.lineTo((-20 * currentSize), (20 * currentSize));
                 ctx.lineTo(0 , 0 );
-                ctx.stroke();
-                ctx.closePath();
-                ctx.fill();
-                ctx.restore();
+                this.postparation();
             }
         }
 
@@ -399,15 +381,11 @@
             constructor(type){
                 super(type);
                 this.type = "Heart";
+                this.draw();
             }
 
             draw(){
-                ctx.save();
-                ctx.lineWidth = currentSize;
-                ctx.strokeStyle = currentColor;
-                ctx.fillStyle = currentColor
-                ctx.beginPath();
-                
+                this.prepare()
                 var width = 20 * currentSize;
                 var height = 20 * currentSize;
                 var x = 0, y = 0;
@@ -442,14 +420,10 @@
                 );
 
 
-                ctx.stroke();
-                ctx.closePath();
-                ctx.fill();
-                ctx.restore();
+                this.postparation();
             }
         }
 
-        //skeleton class for adding line to shapes array
         class Line extends Shape {
             constructor(type){
                 super(type);
@@ -457,69 +431,77 @@
             }
 
             draw(){
-                canvas.addEventListener('click', drawLine, false);
+                this.prepare();
+                ctx.moveTo(firstClick[0], firstClick[1]);
+                ctx.lineTo(lastClick[0], lastClick[1], 6);
+                ctx.lineCap ="round";
+                this.postparation();
+            }
+        }
 
-                if(clicks >= 2)
-                {
-                    canvas.removeEventListener('click', drawLine, false);
+
+
+        class DrawScreen {
+
+            addShape(shape){
+                shapes.push(shape);
+            }
+
+            popLast(){
+                if (shapes.length <= 1) {
+                shapes = [];
+                }
+                else{
+                    shapes.pop();
+                    console.log(shapes.length);
                 }
             }
-        }
 
+            createCanvas(){
+                canvas.id = "canvas";
+                canvas.width = parseInt(window.innerWidth * 0.9);
+                canvas.height = parseInt(window.innerHeight * 0.9);
 
-        function drawLine(e) {
-            if(lineEnabled){
-                x = convert(getMousePos(canvas, e)).x;
-                y = convert(getMousePos(canvas, e)).y;
-            if (clicks != 1) {
-                //to track clicks so line does not get rendered with only one stored coordinate, waits for second click
-                clicks++;
-            } else {
+                canvas.style.border = "1px";
+                canvas.style.zIndex = 8;
+                canvas.style.position = "absolute";
+
+                ctx.fillStyle = currentBackground;
+                ctx.fillRect(0, 0, point.x * 2, point.y * 2);
+
+                body.appendChild(canvas);
+
+                //fix coordinates of canvas to world coordinates
+                ctx.translate(centerX, centerY);
+            }
+
+            draw(){
+                function draw(s){
+                    s.draw();
+                }
+                shapes.map(draw);
+            }
+
+            async importJSON(){
+                //fetch the test file
+                const response = await fetch("test.json");
+                const obj = await response.json();
+                
+                //save current state in order to restore after rotation is applied, helps to recover mouse to canvas coord tracking
                 ctx.save();
-                ctx.lineWidth = currentSize;
-                ctx.strokeStyle = currentColor;
-                ctx.fillStyle = currentColor
+                //rotation will be applied if slider is set to anything other than 0.
+                ctx.rotate(rotationAmount * Math.PI / 180);
                 ctx.beginPath();
-                ctx.moveTo(lastClick[0], lastClick[1]);
-                ctx.lineTo(x, y, 6);
-                ctx.lineCap ="round";
-                ctx.stroke();
+                for(var i in obj){
+                    const coords = scale(obj[i]);
+                    ctx.lineTo(coords.x, coords.y);
+                }
                 ctx.closePath();
+                ctx.fillStyle = currentColor;
                 ctx.fill();
+                ctx.fillStyle = currentBackground;
                 ctx.restore();
-
-                //reset clicks in order to separate lines
-                clicks = 0;
             }
-            lastClick = [x, y];
-            }
-        };
-
-        //function to import shapes in json format, based on x and y coords
-        async function importFile(){
-            //fetch the test file
-            const response = await fetch("test.json");
-            const obj = await response.json();
-            
-            //save current state in order to restore after rotation is applied, helps to recover mouse to canvas coord tracking
-            ctx.save();
-            //rotation will be applied if slider is set to anything other than 0.
-            ctx.rotate(rotationAmount * Math.PI / 180);
-            ctx.beginPath();
-            for(var i in obj){
-                const coords = scale(obj[i]);
-                ctx.lineTo(coords.x, coords.y);
-            }
-            ctx.closePath();
-            ctx.fillStyle = currentColor;
-            ctx.fill();
-            ctx.fillStyle = currentBackground;
-            ctx.restore();
-        }
-
-        //wat doet dit? Het magische regeltje dat ervoor zorgt dat de undo functie werkt.......
-        function draw (s) {
-            s.draw();
         }
 
         //on mouse down get canvas coordinates and store in
@@ -532,33 +514,16 @@
             return [x, y];
         }
 
-		function mousemove(canvas, evt) {
-            if(isMouseDown){
-                currentPosition = getMousePos(canvas, evt);
-            }
-        }
-
-        //will pop latest action in array
-        function popLast(){
-            if (shapes.length <= 1) {
-                shapes = [];
-            }
-            shapes.pop();
-            console.log(shapes.length);
-        }
-
-        //will redraw the canvas with, useful for when background color changed.
-        function redraw(){
-                createCanvas();
-                shapes.map(draw);
-                console.log(shapes);
-        }
-
         //download the canvas
 		function downloadCanvas(link, canvas, filename) {
 			link.href = document.getElementById(canvas).toDataURL();
 			link.download = filename;
 		}
+
+
+
+        let screen = new DrawScreen();
+        screen.createCanvas();
     </script>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-OERcA2EqjJCMA+/3y+gxIOqMEjwtxJY7qPCqsdltbNJuaOe923+mo//f6V8Qbsw3" crossorigin="anonymous"></script>
