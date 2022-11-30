@@ -426,10 +426,13 @@
                 super(type);
                 this.type = "Line";
                 this.draw();
-
+                let firstCoords = firstClick;
+                let lastCoords = lastClick;
             }
 
             draw(){
+                let firstCoords = firstClick;
+                let lastCoords = lastClick;
                 this.prepare();
                 ctx.moveTo(firstCoords[0], firstCoords[1]);
                 ctx.lineTo(lastCoords[0], lastCoords[1], 6);
