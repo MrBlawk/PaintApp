@@ -526,7 +526,9 @@
 
         //download the canvas
 		function downloadCanvas(link, canvas, filename) {
-			link.href = document.getElementById(canvas).toDataURL();
+            let canvasJSON = JSON.stringify(shapes, null, 4);
+            console.log(canvasJSON);
+			link.href = canvasJSON;
 			link.download = filename;
 		}
 
