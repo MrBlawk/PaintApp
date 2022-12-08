@@ -44,7 +44,7 @@
             <div class="functions">
                 <button id="eraserButton"><i class="fas fa-eraser"></i></button>
                 <button id="undoButton"><i class="fas fa-rotate-left"></i><h6>Undo last</h6></button>
-                <button id="resetButton">Reset</button>
+                <button id="resetButton">Clear Canvas</button>
             </div>
 
             <div class="pencilSize">
@@ -147,7 +147,8 @@
         document.getElementById("backgroundColorSelector").addEventListener('change',
             function() {
                 currentBackground = this.value;
-                createCanvas();
+                screen.createCanvas();
+                screen.draw();
             }
         );
 
@@ -185,7 +186,7 @@
 
         //download the canvas
         document.getElementById("downloadButton").addEventListener('click', function(){
-            downloadCanvas(this, "canvas", "canvas.png");
+            downloadCanvas("canvas");
         }, false);
 
         //reset canvas button
@@ -491,7 +492,7 @@
                 canvas.width = parseInt(window.innerWidth * 0.9);
                 canvas.height = parseInt(window.innerHeight * 0.9);
 
-                canvas.style.border = "1px";
+                canvas.style.border = "5px solid black";
                 canvas.style.zIndex = 8;
                 canvas.style.position = "absolute";
 
@@ -544,12 +545,15 @@
         }
 
         //download the canvas
-		function downloadCanvas(link, canvas, filename) {
-            let canvasJSON = JSON.stringify(shapes, null, 4);
-            console.log(canvasJSON);
-			link.href = canvasJSON;
-			link.download = filename;
+		function downloadCanvas() {
+            var canvas = document.getElementById("canvas");
+            image = canvas.toDataURL("image/png", 1.0).replace("image/png", "image/octet-stream");
+            var link = document.createElement('a');
+            link.download = "meesterwerk.png";
+            link.href = image;
+            link.click();
 		}
+
 
 
 
