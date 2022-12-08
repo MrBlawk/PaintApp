@@ -62,6 +62,7 @@
             <div class="functions">
                 <h6>Download</h6>
                 <button id="downloadButton"><i class="fa-solid fa-download"></i></button>
+                <button id="JSONButton">JSON</button>
             </div>
         </div>
     </div>
@@ -186,7 +187,12 @@
 
         //download the canvas
         document.getElementById("downloadButton").addEventListener('click', function(){
-            downloadCanvas("canvas");
+            screen.downloadPNG();
+        }, false);
+
+        //download array as JSON
+        document.getElementById("JSONButton").addEventListener('click', function(){
+            screen.downloadJSON();
         }, false);
 
         //reset canvas button
@@ -536,6 +542,24 @@
                 ctx.fillStyle = currentBackground;
                 ctx.restore();
             }
+
+            downloadPNG(){
+                let canvas = document.getElementById("canvas");
+                let image = canvas.toDataURL("image/png", 1.0).replace("image/png", "image/octet-stream");
+                let link = document.createElement('a');
+                link.download = "meesterwerk.png";
+                link.href = image;
+                link.click();
+            }
+
+            downloadJSON(){
+                let dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(shapes));
+                let link = document.createElement('a');
+                link.download = "meesterwerk.json";
+                link.href = dataStr;
+                link.click();
+            }
+            
         }
 
         //on mouse down get canvas coordinates and store in
@@ -547,19 +571,6 @@
 
             return [x, y];
         }
-
-        //download the canvas
-		function downloadCanvas() {
-            var canvas = document.getElementById("canvas");
-            image = canvas.toDataURL("image/png", 1.0).replace("image/png", "image/octet-stream");
-            var link = document.createElement('a');
-            link.download = "meesterwerk.png";
-            link.href = image;
-            link.click();
-		}
-
-
-
 
         let screen = new DrawScreen();
         screen.createCanvas();
