@@ -315,7 +315,7 @@
                 ctx.lineWidth = this.shapeSize;
                 ctx.strokeStyle = this.shapeColor;
                 ctx.fillStyle = this.shapeColor;
-                ctx.rotate(rotationAmount * Math.PI / 180);
+                ctx.rotate(this.rotation * Math.PI / 180);
                 ctx.beginPath();
             };
 
@@ -332,11 +332,12 @@
 
         //square class that will create a square on canvas
         class Square extends Shape {
-            constructor (type, x, y, shapeSize, shapeColor){
+            constructor (type, x, y, rotation, shapeSize, shapeColor){
                 super(type);
                 this.shapename = "Square";
                 this.x = xAxisOffset;
                 this.y = yAxisOffset;
+                this.rotation = rotationAmount;
                 this.shapeSize = currentSize;
                 this.shapeColor = currentColor;
                 this.draw(x, y, shapeSize, shapeColor);
@@ -351,11 +352,12 @@
 
         //circle class that will create a circle on canvas
         class Circle extends Shape {
-            constructor(type, x, y, shapeSize, shapeColor){
+            constructor(type, x, y, rotation, shapeSize, shapeColor){
                 super(type);
                 this.type = "Circle";
                 this.x = xAxisOffset;
                 this.y = yAxisOffset;
+                this.rotation = rotationAmount;
                 this.shapeSize = currentSize;
                 this.shapeColor = currentColor;
                 this.draw(x, y, shapeSize, shapeColor);
@@ -369,11 +371,12 @@
         }
 
         class Triangle extends Shape {
-            constructor(type, x, y, shapeSize, shapeColor){
+            constructor(type, x, y, rotation, shapeSize, shapeColor){
                 super(type);
                 this.type = "Triangle";
                 this.x = xAxisOffset;
                 this.y = yAxisOffset;
+                this.rotation = rotationAmount;
                 this.shapeSize = currentSize;
                 this.shapeColor = currentColor;
                 this.draw();
@@ -390,11 +393,12 @@
         }
 
         class Heart extends Shape {
-            constructor(type, x, y, shapeSize, shapeColor){
+            constructor(type, x, y, rotation, shapeSize, shapeColor){
                 super(type);
                 this.type = "Heart";
                 this.x = xAxisOffset;
                 this.y = yAxisOffset;
+                this.rotation = rotationAmount;
                 this.shapeSize = currentSize;
                 this.shapeColor = currentColor;
                 this.draw(x, y, shapeSize, shapeColor);
