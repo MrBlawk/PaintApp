@@ -311,9 +311,9 @@
 
             prepare(){
                 ctx.save();
-                ctx.lineWidth = currentSize;
-                ctx.strokeStyle = currentColor;
-                ctx.fillStyle = currentColor
+                ctx.lineWidth = this.shapeSize;
+                ctx.strokeStyle = this.shapeColor;
+                ctx.fillStyle = this.shapeColor;
                 ctx.rotate(rotationAmount * Math.PI / 180);
                 ctx.beginPath();
             };
@@ -329,62 +329,80 @@
             
         }
 
+        //square class that will create a square on canvas
         class Square extends Shape {
-            constructor (type){
+            constructor (type, x, y, shapeSize, shapeColor){
                 super(type);
                 this.shapename = "Square";
-                this.draw();
+                this.x = xAxisOffset;
+                this.y = yAxisOffset;
+                this.shapeSize = currentSize;
+                this.shapeColor = currentColor;
+                this.draw(x, y, shapeSize, shapeColor);
             }
 
-            draw(){
+            draw(x, y, shapeSize, shapeColor){
                 this.prepare();
-                ctx.rect(xAxisOffset, yAxisOffset, currentSize * 10, currentSize * 10);
+                ctx.rect(this.x, this.y, this.shapeSize * 10, this.shapeSize * 10);
                 this.postparation();
             };
         }
 
+        //circle class that will create a circle on canvas
         class Circle extends Shape {
-            constructor(type){
+            constructor(type, x, y, shapeSize, shapeColor){
                 super(type);
                 this.type = "Circle";
-                this.draw();
+                this.x = xAxisOffset;
+                this.y = yAxisOffset;
+                this.shapeSize = currentSize;
+                this.shapeColor = currentColor;
+                this.draw(x, y, shapeSize, shapeColor);
             }
 
-            draw(){
+            draw(x, y, shapeSize, shapeColor){
                 this.prepare();
-                ctx.arc(xAxisOffset, yAxisOffset, currentSize * 10, 0, 2* Math.PI);
+                ctx.arc(this.x, this.y, this.shapeSize * 10, 0, 2* Math.PI);
                 this.postparation();
             }
         }
 
         class Triangle extends Shape {
-            constructor(type){
+            constructor(type, x, y, shapeSize, shapeColor){
                 super(type);
                 this.type = "Triangle";
+                this.x = xAxisOffset;
+                this.y = yAxisOffset;
+                this.shapeSize = currentSize;
+                this.shapeColor = currentColor;
                 this.draw();
             }
 
-            draw(){
+            draw(x, y, shapeSize, shapeColor){
                 this.prepare();
                 ctx.moveTo(0, 0 );
-                ctx.lineTo((20 * currentSize), (20 * currentSize));
-                ctx.lineTo((-20 * currentSize), (20 * currentSize));
+                ctx.lineTo((20 * this.shapeSize), (20 * this.shapeSize));
+                ctx.lineTo((-20 * this.shapeSize), (20 * this.shapeSize));
                 ctx.lineTo(0 , 0 );
                 this.postparation();
             }
         }
 
         class Heart extends Shape {
-            constructor(type){
+            constructor(type, x, y, shapeSize, shapeColor){
                 super(type);
                 this.type = "Heart";
-                this.draw();
+                this.x = xAxisOffset;
+                this.y = yAxisOffset;
+                this.shapeSize = currentSize;
+                this.shapeColor = currentColor;
+                this.draw(x, y, shapeSize, shapeColor);
             }
 
-            draw(){
+            draw(x, y, shapeSize, shapeColor){
                 this.prepare()
-                var width = 20 * currentSize;
-                var height = 20 * currentSize;
+                var width = 20 * this.shapeSize;
+                var height = 20 * this.shapeSize;
                 var x = 0, y = 0;
                 var topCurveHeight = height * 0.3;
                 ctx.moveTo(x, y + topCurveHeight);
@@ -422,20 +440,21 @@
         }
 
         class Line extends Shape {
-            constructor(type){
+            constructor(type, startpoint, endpoint, shapeSize, shapeColor){
                 super(type);
                 this.type = "Line";
-                this.draw();
-                let firstCoords = firstClick;
-                let lastCoords = lastClick;
+                this.startpoint = firstClick;
+                this.endpoint = lastClick;
+                this.shapeSize = currentSize;
+                this.shapeColor = currentColor;
+                this.draw(startpoint, endpoint, shapeSize, shapeColor);
+
             }
 
-            draw(){
-                let firstCoords = firstClick;
-                let lastCoords = lastClick;
+            draw(startpoint, endpoint){
                 this.prepare();
-                ctx.moveTo(firstCoords[0], firstCoords[1]);
-                ctx.lineTo(lastCoords[0], lastCoords[1], 6);
+                ctx.moveTo(this.startpoint[0], this.startpoint[1]);
+                ctx.lineTo(this.endpoint[0], this.endpoint[1], 6);
                 ctx.lineCap ="round";
                 this.postparation();
             }
